@@ -292,12 +292,13 @@ class NetworkBrowserViewModel(
     runCatching {
       val uri = URI(rawUri)
       val expectedScheme =
-        when (connection.protocol) {
-          NetworkProtocol.SMB -> "smb"
-          NetworkProtocol.FTP -> "ftp"
-          NetworkProtocol.SFTP -> "sftp"
-          NetworkProtocol.WEBDAV -> if (connection.useHttps) "https" else "http"
-        }
+    when (connection.protocol) {
+        NetworkProtocol.SMB -> "smb"
+        NetworkProtocol.FTP -> "ftp"
+        NetworkProtocol.SFTP -> "sftp"
+        NetworkProtocol.WEBDAV -> if (connection.useHttps) "https" else "http"
+        NetworkProtocol.BDIX -> if (connection.useHttps) "https" else "http"
+    }
       if (!uri.scheme.equals(expectedScheme, ignoreCase = true) ||
         !uri.host.equals(connection.host.trim('[', ']'), ignoreCase = true) ||
         uri.rawQuery != null ||
