@@ -247,7 +247,7 @@ fun EditConnectionSheet(
         }
 
         // HTTPS checkbox (only for WebDAV)
-        if (protocol == NetworkProtocol.WEBDAV) {
+        if (protocol == NetworkProtocol.WEBDAV || protocol == NetworkProtocol.BDIX) {
           Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
