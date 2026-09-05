@@ -47,11 +47,14 @@ class BdixClient(
         withContext(Dispatchers.IO) {
             try {
                 val response = request("", "GET")
-                response.use {
-                    if (it.responseCode !in 200..399) {
-                        throw IOException("BDIX server returned HTTP ${it.responseCode}")
-                    }
-                }
+
+try {
+    if (response.responseCode !in 200..399) {
+        throw IOException("BDIX server returned HTTP ${response.responseCode}")
+    }
+} finally {
+    response.disconnect()
+}
                 connected = true
                 Result.success(Unit)
             } catch (e: CancellationException) {
@@ -74,12 +77,15 @@ class BdixClient(
                 val normalized = NetworkPath.from(path).value
                 val response = request(normalized, "GET")
 
-                val html = response.use {
-                    if (it.responseCode !in 200..399) {
-                        throw IOException("BDIX index returned HTTP ${it.responseCode}")
-                    }
-                    it.inputStream.bufferedReader(Charsets.UTF_8).readText()
-                }
+val html = try {
+    if (response.responseCode !in 200..399) {
+        throw IOException("BDIX index returned HTTP ${response.responseCode}")
+    }
+
+    response.inputStream.bufferedReader(Charsets.UTF_8).readText()
+} finally {
+    response.disconnect()
+}
 
                 val entries = parseIndex(html, normalized)
 
@@ -106,14 +112,22 @@ class BdixClient(
         withContext(Dispatchers.IO) {
             try {
                 val response = request(NetworkPath.from(path).value, "HEAD")
-                response.use {
-                    if (it.responseCode !in 200..399) {
-                        throw IOException("BDIX HEAD returned HTTP ${it.responseCode}")
-                    }
-                    val size = it.contentLengthLong
-                    if (size >= 0L) Result.success(size)
-                    else Result.failure(IOException("Content-Length unavailable"))
-                }
+
+try {
+    if (response.responseCode !in 200..399) {
+        throw IOException("BDIX HEAD returned HTTP ${response.responseCode}")
+    }
+
+    val size = response.contentLengthLong
+
+    if (size >= 0L) {
+        Result.success(size)
+    } else {
+        Result.failure(IOException("Content-Length unavailable"))
+    }
+} finally {
+    response.disconnect()
+}
             } catch (e: Exception) {
                 Result.failure(e)
             }
