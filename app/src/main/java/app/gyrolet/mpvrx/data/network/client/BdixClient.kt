@@ -47,14 +47,13 @@ class BdixClient(
         withContext(Dispatchers.IO) {
             try {
                 val response = request("", "GET")
-
-try {
-    if (response.responseCode !in 200..399) {
-        throw IOException("BDIX server returned HTTP ${response.responseCode}")
-    }
-} finally {
-    response.disconnect()
-}
+                try {
+                    if (response.responseCode !in 200..399) {
+                        throw IOException("BDIX server returned HTTP ${response.responseCode}")
+                    }
+                } finally {
+                    response.disconnect()
+                }
                 connected = true
                 Result.success(Unit)
             } catch (e: CancellationException) {
@@ -77,15 +76,14 @@ try {
                 val normalized = NetworkPath.from(path).value
                 val response = request(normalized, "GET")
 
-val html = try {
-    if (response.responseCode !in 200..399) {
-        throw IOException("BDIX index returned HTTP ${response.responseCode}")
-    }
-
-    response.inputStream.bufferedReader(Charsets.UTF_8).readText()
-} finally {
-    response.disconnect()
-}
+                val html = try {
+                    if (response.responseCode !in 200..399) {
+                        throw IOException("BDIX index returned HTTP ${response.responseCode}")
+                    }
+                    response.inputStream.bufferedReader(Charsets.UTF_8).readText()
+                } finally {
+                    response.disconnect()
+                }
 
                 val entries = parseIndex(html, normalized)
 
@@ -112,22 +110,19 @@ val html = try {
         withContext(Dispatchers.IO) {
             try {
                 val response = request(NetworkPath.from(path).value, "HEAD")
-
-try {
-    if (response.responseCode !in 200..399) {
-        throw IOException("BDIX HEAD returned HTTP ${response.responseCode}")
-    }
-
-    val size = response.contentLengthLong
-
-    if (size >= 0L) {
-        Result.success(size)
-    } else {
-        Result.failure(IOException("Content-Length unavailable"))
-    }
-} finally {
-    response.disconnect()
-}
+                try {
+                    if (response.responseCode !in 200..399) {
+                        throw IOException("BDIX HEAD returned HTTP ${response.responseCode}")
+                    }
+                    val size = response.contentLengthLong
+                    if (size >= 0L) {
+                        Result.success(size)
+                    } else {
+                        Result.failure(IOException("Content-Length unavailable"))
+                    }
+                } finally {
+                    response.disconnect()
+                }
             } catch (e: Exception) {
                 Result.failure(e)
             }
@@ -286,7 +281,7 @@ try {
 
         h5ai.findAll(html).forEach { match ->
             val href = match.groupValues[1]
-            val name = cleanHtml(match.groupValues[2]).trim()
+            val name = cleanHtml(match.groupValues[2]).trim().trimEnd('/')
             if (name.isBlank() || href == ".." || href == "../") return@forEach
 
             val decodedHref = decodeSegment(href)
@@ -313,7 +308,7 @@ try {
 
         nginx.findAll(html).forEach { match ->
             val href = match.groupValues[1]
-            val name = cleanHtml(match.groupValues[2]).trim()
+            val name = cleanHtml(match.groupValues[2]).trim().trimEnd('/')
             if (name.isBlank() || href == "../") return@forEach
 
             entries[name] = Entry(
@@ -339,7 +334,7 @@ try {
                 return@forEach
             }
 
-            val name = cleanHtml(match.groupValues[2]).trim()
+            val name = cleanHtml(match.groupValues[2]).trim().trimEnd('/')
             if (name.isBlank()) return@forEach
 
             val looksLikeParent =
